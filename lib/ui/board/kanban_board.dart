@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -22,7 +21,7 @@ class _KanbanBoardState extends ConsumerState<KanbanBoard>
   double _scrollDirection = 0;
 
   static const _edgeSize = 80.0;
-  static const _scrollSpeed = 8.0;
+  static const _scrollSpeed = 12.0;
 
   @override
   void dispose() {
@@ -59,6 +58,20 @@ class _KanbanBoardState extends ConsumerState<KanbanBoard>
   Widget build(BuildContext context) {
     final boardAsync = ref.watch(kanbanProvider);
 
+    ref.listen(kanbanActionErrorProvider, (_, error) {
+      if (error == null) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(error.message),
+            behavior: .floating,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      ref.read(kanbanActionErrorProvider.notifier).clear();
+    });
+
     ref.listen(dragPositionProvider, (_, dragState) {
       final position = dragState.position;
       if (position == null) {
@@ -80,30 +93,34 @@ class _KanbanBoardState extends ConsumerState<KanbanBoard>
       body: boardAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
-        data: (columns) => Listener(
-          onPointerSignal: (event) {
-            if (event is PointerScrollEvent) {
-              _scrollController.jumpTo(
-                (_scrollController.offset + event.scrollDelta.dy).clamp(
-                  0.0,
-                  _scrollController.position.maxScrollExtent,
-                ),
-              );
-            }
-          },
+        data: (columns) => Scrollbar(
+          controller: _scrollController,
+          thumbVisibility: true,
+          trackVisibility: true,
+          interactive: true,
+          scrollbarOrientation: .bottom,
           child: SingleChildScrollView(
             controller: _scrollController,
             scrollDirection: .horizontal,
+            physics: const ClampingScrollPhysics(),
             child: SizedBox(
               height:
                   MediaQuery.of(context).size.height -
                   kToolbarHeight -
                   MediaQuery.of(context).padding.top,
-              child: Row(
-                crossAxisAlignment: .start,
-                children: columns
-                    .map((col) => KanbanColumnWidget(column: col))
-                    .toList(),
+              child: Padding(
+                padding: const .only(bottom: 12),
+                child: Row(
+                  crossAxisAlignment: .start,
+                  children: columns
+                      .map(
+                        (col) => KanbanColumnWidget(
+                          key: ValueKey(col.id),
+                          column: col,
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
             ),
           ),

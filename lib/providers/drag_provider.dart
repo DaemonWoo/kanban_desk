@@ -3,10 +3,7 @@ import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DragState {
-  const DragState({
-    required this.position,
-    required this.activeColumnId,
-  });
+  const DragState({required this.position, required this.activeColumnId});
 
   final Offset? position;
   final String? activeColumnId;
