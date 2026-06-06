@@ -1,4 +1,4 @@
 # last_kanban
 
 A new Flutter project.
-# kanban_desk
+# mostly ai-generated crap
